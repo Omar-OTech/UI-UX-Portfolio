@@ -59,17 +59,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.querySelector('.modal-close');
 
     // Open Modal when clicking on project images
+    // Open Modal when clicking on project images
     document.querySelectorAll('.portfolio-card').forEach(card => {
         card.addEventListener('click', function (e) {
-            // Prevent if clicking on tags or external links if any (though currently whole card is clickable)
-            // But we want to target the image mainly? Or the whole card as a trigger?
-            // The request was "show design in full size", so clicking the card usually implies "view project".
-            // Let's use the image inside the card as the source.
+            // Check if multiple images exist (slider) or single image
+            const sliderTrack = this.querySelector('.slider-track');
+            let img;
 
-            const img = this.querySelector('img');
+            if (sliderTrack) {
+                // If it's a slider, get the currently visible image
+                // We'll track the index on the slider container or calculate from transform
+                // Actually, let's just find the one that matches the current index.
+                // We will implement slider logic below and store current index in dataset.
+                const currentIndex = parseInt(this.querySelector('.slider-container').dataset.currentIndex || 0);
+                img = sliderTrack.children[currentIndex];
+            } else {
+                img = this.querySelector('img');
+            }
+
             const title = this.querySelector('h3').textContent;
 
-            if (img) {
+            // Only open if we didn't click a slider button
+            if (img && !e.target.classList.contains('slider-btn')) {
                 modal.style.display = "flex";
                 // Trigger reflow to enable transition
                 void modal.offsetWidth;
@@ -81,6 +92,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.style.overflow = 'hidden'; // Disable scroll
             }
         });
+    });
+
+    // Slider Functionality
+    document.querySelectorAll('.slider-container').forEach(slider => {
+        const track = slider.querySelector('.slider-track');
+        const slides = track.querySelectorAll('.slider-item');
+        const nextBtn = slider.querySelector('.next-btn');
+        const prevBtn = slider.querySelector('.prev-btn');
+        let currentIndex = 0;
+
+        // Initialize dataset
+        slider.dataset.currentIndex = 0;
+
+        function updateSlider() {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            slider.dataset.currentIndex = currentIndex; // Update for lightbox usage
+        }
+
+        if (nextBtn && prevBtn) {
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent opening lightbox
+                currentIndex = (currentIndex + 1) % slides.length;
+                updateSlider();
+            });
+
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent opening lightbox
+                currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+                updateSlider();
+            });
+        }
     });
 
     // Close Modal Function
